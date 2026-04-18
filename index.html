@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>College Bus Tracker</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+
+<body>
+
+    <div id="sidebar">
+        <h2>🚌 Bus Tracker</h2>
+        <p><strong>Bus No:</strong> B-12</p>
+        <p><strong>Route:</strong> Track B</p>
+        <p id="status">Status: Connecting...</p>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="etaBox">
+        ETA: <span id="eta">--</span>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+
+</body>
+
+</html>
