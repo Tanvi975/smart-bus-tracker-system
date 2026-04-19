@@ -1,43 +1,38 @@
-// Initialize map centered at Ghaziabad
+// 🗺️ Map initialize
+const busIcon = L.icon({
+    iconUrl: 'https://img.icons8.com/emoji/48/bus-emoji.png',
+    iconSize: [55, 55],
+    iconAnchor: [25, 25],
+    popupAnchor: [0, -40]
+});
+
 const map = L.map('map').setView([28.6757, 77.5018], 13);
 
-// Tile layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
 }).addTo(map);
 
-// Custom Bus Icon
-const busIcon = L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/61/61231.png',
-    iconSize: [40, 40]
-});
-
-// Marker
+// 🚌 Marker
 let marker = L.marker([28.6757, 77.5018], { icon: busIcon }).addTo(map);
 
-// State variables
+// 📊 State variables
 let lastPosition = null;
 let currentPosition = null;
 let lastUpdateTime = Date.now();
 let speed = 0;
 let isOffline = false;
 
-// Adaptive polling interval
 let fetchInterval = 2000;
 
-// Detect network speed (basic)
+// 🌐 Network speed detect
 function adjustFetchInterval() {
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     if (connection) {
-        if (connection.downlink < 1) {
-            fetchInterval = 5000; // slow network
-        } else {
-            fetchInterval = 2000; // fast network
-        }
+        fetchInterval = connection.downlink < 1 ? 5000 : 2000;
     }
 }
 
-// Smooth interpolation
+// 🔄 Smooth interpolation (online)
 function interpolatePosition() {
     if (!lastPosition || !currentPosition) return;
 
@@ -50,18 +45,18 @@ function interpolatePosition() {
     marker.setLatLng([lat, lng]);
 }
 
-// Store-and-forward fallback (predict movement)
+// 🔮 Offline prediction
 function predictMovement() {
-    if (!currentPosition || !lastPosition) return;
+    if (!currentPosition) return;
 
-    const dt = 1; // seconds
-    const lat = currentPosition.lat + speed * dt * 0.0001;
-    const lng = currentPosition.lng + speed * dt * 0.0001;
+    const newLat = currentPosition.lat + 0.0001;
+    const newLng = currentPosition.lng + 0.0001;
 
-    marker.setLatLng([lat, lng]);
+    marker.setLatLng([newLat, newLng]);
+    currentPosition = { lat: newLat, lng: newLng };
 }
 
-// Fetch API
+// 📡 Fetch API
 async function fetchBusData() {
     try {
         const res = await fetch('http://localhost:3000/bus-location');
@@ -79,13 +74,6 @@ async function fetchBusData() {
 
         document.getElementById("eta").innerText = data.eta + " mins";
 
-        // 🚌 Marker update
-        if (!marker) {
-            marker = L.marker([data.lat, data.lng]).addTo(map);
-        } else {
-            marker.setLatLng([data.lat, data.lng]);
-        }
-
     } catch (err) {
         console.log("Offline mode");
 
@@ -93,19 +81,12 @@ async function fetchBusData() {
         document.getElementById("status").innerText = "Status: Reconnecting...";
         isOffline = true;
 
-        // 🟡 Prediction logic (IMPORTANT 🔥)
-        if (currentPosition && marker) {
-            let newLat = currentPosition.lat + 0.0001;
-            let newLng = currentPosition.lng + 0.0001;
-
-            marker.setLatLng([newLat, newLng]);
-
-            currentPosition = { lat: newLat, lng: newLng };
-        }
+        // Prediction movement
+        predictMovement();
     }
 }
 
-// Animation loop
+// 🎞️ Animation loop (IMPORTANT)
 function animate() {
     if (isOffline) {
         predictMovement();
@@ -115,7 +96,7 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-// Start system
+// 🚀 Start system
 function start() {
     adjustFetchInterval();
     setInterval(fetchBusData, fetchInterval);
@@ -123,3 +104,17 @@ function start() {
 }
 
 start();
+
+// 🌐 Network events
+window.addEventListener('offline', () => {
+    isOffline = true;
+    const statusElement = document.getElementById("status");
+    if (statusElement) {
+        statusElement.innerText = "Status: Reconnecting...";
+        statusElement.style.color = "orange";
+    }
+});
+
+window.addEventListener('online', () => {
+    console.log("Internet back");
+});
